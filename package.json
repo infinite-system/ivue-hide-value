@@ -1,0 +1,50 @@
+{
+  "name": "ivue-hide-value",
+  "displayName": "ivue hide .value",
+  "description": "Visually folds `.value` to a middot ·, with caret-reveal & hover hint.",
+  "publisher": "your-name-or-scope",
+  "version": "0.1.0",
+  "engines": { "vscode": "^1.104.0" },
+  "categories": ["Other"],
+  "activationEvents": [
+    "onStartupFinished",
+    "onLanguage:javascript",
+    "onLanguage:javascriptreact",
+    "onLanguage:typescript",
+    "onLanguage:typescriptreact",
+    "onLanguage:vue"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "ivue hide .value",
+      "properties": {
+        "ivueHideValue.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable folding of `.value`."
+        },
+        "ivueHideValue.middot": {
+          "type": "string",
+          "default": "·",
+          "description": "Symbol shown instead of `.value`."
+        },
+        "ivueHideValue.color": {
+          "type": "string",
+          "default": "#999999",
+          "description": "Middot color."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc -p .",
+    "watch": "tsc -w -p .",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.104.0",
+    "typescript": "^5.6.3",
+    "vsce": "latest"
+  }
+}
