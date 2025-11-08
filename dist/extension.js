@@ -49,6 +49,30 @@ var hiddenValueDecoration = vscode.window.createTextEditorDecorationType({
     // pull the dot left into the hidden width
   }
 });
+var hideWholeLineDecoration = vscode.window.createTextEditorDecorationType({
+  textDecoration: "font-size:0; opacity:0;",
+  rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed
+});
+var lineDotDecoration = vscode.window.createTextEditorDecorationType({
+  before: {
+    contentText: DOT,
+    color: new vscode.ThemeColor("editor.foreground"),
+    fontSize: "0.8em",
+    margin: "0 .2ch 0 0"
+  }
+});
+var dollarToComputedDecoration = vscode.window.createTextEditorDecorationType({
+  textDecoration: "font-size:0; opacity:0;",
+  // hide the "$"
+  rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
+  after: {
+    // show "computed " right where the $ was; no trailing space requested
+    contentText: "computed",
+    color: new vscode.ThemeColor("editor.foreground"),
+    fontStyle: "italic",
+    margin: "0 1ch 0 -1ch"
+  }
+});
 function langOk(editor) {
   return !!editor && TS_LIKE_LANGS.includes(editor.document.languageId);
 }
@@ -82,7 +106,7 @@ async function getHoverTypeAt(doc, pos) {
 async function isRefLike(doc, receiverEnd) {
   const hover = await getHoverTypeAt(doc, receiverEnd);
   if (!hover) return false;
-  return /\b(Ref|ShallowRef|ComputedRef|WritableComputedRef)\s*<|:?\s*Ref<|:?\s*ComputedRef</.test(hover);
+  return /\b(Ref|ShallowRef|ComputedRef|WritableComputedRef)\s*</.test(hover);
 }
 function findValueRangesInVisible(editor) {
   const { document, visibleRanges } = editor;
@@ -108,12 +132,63 @@ function debounce(fn, wait = 120) {
     t = setTimeout(() => fn(...args), wait);
   };
 }
+var RE_COMPUTED_ASSIGN = /^\s*(?:public|protected|private)?\s*(?:override\s+)?([A-Za-z_]\w*)\s*=\s*computed\s*\(\s*this\.\$([A-Za-z_]\w*)\s*\.bind\s*\(\s*this\s*\)\s*\)\s*;?/;
+var RE_METHOD_SIG = /^\s*(?:public|protected|private)?\s*(?:override\s+)?(?:async\s+)?(\$[A-Za-z_]\w*)\s*\(/;
+function findComputedPairsInVisible(editor) {
+  const pairs = [];
+  const doc = editor.document;
+  const { visibleRanges } = editor;
+  const methodDollarByName = /* @__PURE__ */ new Map();
+  for (const vis of visibleRanges) {
+    for (let line = vis.start.line; line <= vis.end.line; line++) {
+      const text = doc.lineAt(line).text;
+      const m = RE_METHOD_SIG.exec(text);
+      if (m) {
+        const full = m[1];
+        const idx = text.indexOf(full);
+        const dollarCol = idx;
+        const r = new vscode.Range(
+          new vscode.Position(line, dollarCol),
+          new vscode.Position(line, dollarCol + 1)
+          // only the '$'
+        );
+        methodDollarByName.set(full.slice(1), r);
+      }
+    }
+  }
+  for (const vis of visibleRanges) {
+    for (let line = vis.start.line; line <= vis.end.line; line++) {
+      const text = doc.lineAt(line).text;
+      const a = RE_COMPUTED_ASSIGN.exec(text);
+      if (!a) continue;
+      const lhsName = a[1];
+      const rhsMethod = a[2];
+      if (lhsName !== rhsMethod) {
+      }
+      const methodRange = methodDollarByName.get(rhsMethod);
+      if (!methodRange) continue;
+      const assignStart = new vscode.Position(line, 0);
+      const assignEnd = new vscode.Position(line, text.length);
+      const assignRange = new vscode.Range(assignStart, assignEnd);
+      const firstNon = text.search(/\S/);
+      const col = firstNon === -1 ? 0 : firstNon;
+      const dotPos = new vscode.Position(line, col);
+      const dotAnchor = new vscode.Range(dotPos, dotPos);
+      pairs.push({
+        assignRange,
+        dotAnchor,
+        dollarRange: methodRange
+      });
+    }
+  }
+  return pairs;
+}
 var applyDecorations = debounce(async () => {
   const editor = vscode.window.activeTextEditor;
   if (!langOk(editor)) return;
   const { document, selections } = editor;
   const valueRanges = findValueRangesInVisible(editor);
-  const decorations = [];
+  const valueDecorations = [];
   for (const r of valueRanges) {
     if (anySelectionTouches(r, selections)) {
       continue;
@@ -122,9 +197,26 @@ var applyDecorations = debounce(async () => {
     if (r.start.character < 1) continue;
     const ok = await isRefLike(document, receiverEnd);
     if (!ok) continue;
-    decorations.push({ range: r, hoverMessage: new vscode.MarkdownString("**Ref-like**: hidden `.value`") });
+    valueDecorations.push({ range: r, hoverMessage: new vscode.MarkdownString("**Ref-like**: hidden `.value`") });
   }
-  editor.setDecorations(hiddenValueDecoration, decorations);
+  editor.setDecorations(hiddenValueDecoration, valueDecorations);
+  const pairs = findComputedPairsInVisible(editor);
+  const hideLineDecos = [];
+  const dotDecos = [];
+  const dollarDecos = [];
+  for (const p of pairs) {
+    const touchesAssign = anySelectionTouches(p.assignRange, selections);
+    const touchesDollar = anySelectionTouches(p.dollarRange, selections);
+    if (touchesAssign || touchesDollar) {
+      continue;
+    }
+    hideLineDecos.push({ range: p.assignRange });
+    dotDecos.push({ range: p.dotAnchor });
+    dollarDecos.push({ range: p.dollarRange });
+  }
+  editor.setDecorations(hideWholeLineDecoration, hideLineDecos);
+  editor.setDecorations(lineDotDecoration, dotDecos);
+  editor.setDecorations(dollarToComputedDecoration, dollarDecos);
 }, 50);
 function activate(context) {
   applyDecorations();
