@@ -6,8 +6,11 @@
       "type": "extensionHost",
       "request": "launch",
       "runtimeExecutable": "${execPath}",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}",
+        "${workspaceFolder}/../realized"
+      ],
       "outFiles": ["${workspaceFolder}/dist/**/*.js"],
-      "preLaunchTask": null
     }
   ]
 }
