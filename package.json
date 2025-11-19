@@ -2,9 +2,10 @@
   "name": "ivue-hide-value",
   "displayName": "ivue-hide-value",
   "description": "Visually fold `.value` to a middot and smartly delete it with Backspace.",
-  "version": "0.1.3",
-  "publisher": "your-name-or-scope",
+  "version": "0.1.6",
+  "publisher": "systems-infinite",
   "engines": { "vscode": "^1.90.0" },
+  "license": "MIT",
   "categories": ["Other"],
   "main": "./dist/extension.js",
   "activationEvents": [
@@ -16,12 +17,26 @@
     "onCommand:ivueHideValue.backspace"
   ],
   "contributes": {
-    
+    "snippets": [
+      {
+        "language": "javascript",
+        "path": "./snippets/ivue-snippets.json"
+      },
+      {
+        "language": "typescript",
+        "path": "./snippets/ivue-snippets.json"
+      },
+      {
+        "language": "vue",
+        "path": "./snippets/ivue-snippets.json"
+      }
+    ]
   },
   "scripts": {
     "build": "esbuild src/extension.ts --bundle --platform=node --external:vscode --outfile=dist/extension.js",
     "watch": "esbuild src/extension.ts --bundle --platform=node --external:vscode --outfile=dist/extension.js --watch",
-    "package": "vsce package"
+    "package": "vsce package",
+    "publish": "npm run build && vsce publish"
   },
   "devDependencies": {
     "esbuild": "^0.23.0",

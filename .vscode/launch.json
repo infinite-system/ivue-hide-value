@@ -10,7 +10,7 @@
         "--extensionDevelopmentPath=${workspaceFolder}",
         "${workspaceFolder}/../ivue"
       ],
-      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"]
     }
   ]
 }
