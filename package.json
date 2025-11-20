@@ -2,7 +2,7 @@
   "name": "ivue-hide-value",
   "displayName": "ivue-hide-value",
   "description": "Visually fold `.value` to a middot and smartly delete it with Backspace.",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "publisher": "systems-infinite",
   "engines": { "vscode": "^1.90.0" },
   "license": "MIT",
