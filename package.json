@@ -4,6 +4,10 @@
   "description": "Visually fold `.value` to a middot and smartly delete it with Backspace.",
   "version": "0.1.8",
   "publisher": "systems-infinite",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/infinite-system/ivue-hide-value"
+  },
   "engines": { "vscode": "^1.90.0" },
   "license": "MIT",
   "categories": ["Other"],
