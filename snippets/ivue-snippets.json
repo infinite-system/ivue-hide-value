@@ -2,9 +2,8 @@
   "Class Composable Computed": {
     "prefix": "computed",
     "body": [
-      "$1 = computed(() => this.$$1());", 
-      "protected $$1() {",
-      "  $2",
+      "get $$1() {",
+      "  return computed(() => $$2)",
       "}"
     ],
     "description": "Makes a class composable computed property."
